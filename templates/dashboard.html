@@ -24,14 +24,14 @@
     Material Dashboard 2 by Creative Tim
   </title>
   <!--     Fonts and icons     -->
-  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,900|Roboto+Slab:400,700" />
+  <link rel="stylesheet" type="text/css" href="{{url_for('static',filename='css/font.css')}}" />
   <!-- Nucleo Icons -->
   <link href="{{url_for('static',filename='css/nucleo-icons.css')}}" rel="stylesheet" />
   <link href="{{url_for('static',filename='css/nucleo-svg.css')}}" rel="stylesheet" />
   <!-- Font Awesome Icons -->
   <script src="{{url_for('static',filename='js/kitfont.js')}}" crossorigin="anonymous"></script>
   <!-- Material Icons -->
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link href="{{url_for('static',filename='css/fontg.css')}}" rel="stylesheet">
   <!-- CSS Files -->
   <link id="pagestyle" href="{{url_for('static',filename='css/material-dashboard.css')}}" rel="stylesheet" />
   <!-- Nepcha Analytics (nepcha.com) -->
@@ -331,21 +331,21 @@
       </div>
       <div class="row mt-4">
         <div class="col-lg-4 col-md-6 mt-4 mb-4">
-          <div class="card z-index-2 ">
+          <div class="card z-index-2">
             <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
               <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
-                <div class="chart">
-                  <canvas id="chart-bars" class="chart-canvas" height="170"></canvas>
+                <!-- Replace the existing chart canvas with the bar chart container -->
+                <div id="chart-container" class="chart">
                 </div>
               </div>
             </div>
             <div class="card-body">
-              <h6 class="mb-0 ">Website Views</h6>
-              <p class="text-sm ">Last Campaign Performance</p>
+              <h6 class="mb-0">Website Views</h6>
+              <p class="text-sm">Last Campaign Performance</p>
               <hr class="dark horizontal">
-              <div class="d-flex ">
+              <div class="d-flex">
                 <i class="material-icons text-sm my-auto me-1">schedule</i>
-                <p class="mb-0 text-sm"> campaign sent 2 days ago </p>
+                <p class="mb-0 text-sm">campaign sent 2 days ago</p>
               </div>
             </div>
           </div>
@@ -360,12 +360,12 @@
               </div>
             </div>
             <div class="card-body">
-              <h6 class="mb-0 "> Daily Sales </h6>
-              <p class="text-sm "> (<span class="font-weight-bolder">+15%</span>) increase in today sales. </p>
+              <h6 class="mb-0">Daily Sales</h6>
+              <p class="text-sm">(<span class="font-weight-bolder">+15%</span>) increase in today sales.</p>
               <hr class="dark horizontal">
-              <div class="d-flex ">
+              <div class="d-flex">
                 <i class="material-icons text-sm my-auto me-1">schedule</i>
-                <p class="mb-0 text-sm"> updated 4 min ago </p>
+                <p class="mb-0 text-sm">updated 4 min ago</p>
               </div>
             </div>
           </div>
@@ -379,15 +379,7 @@
                 </div>
               </div>
             </div>
-            <div class="card-body">
-              <h6 class="mb-0 ">Completed Tasks</h6>
-              <p class="text-sm ">Last Campaign Performance</p>
-              <hr class="dark horizontal">
-              <div class="d-flex ">
-                <i class="material-icons text-sm my-auto me-1">schedule</i>
-                <p class="mb-0 text-sm">just updated</p>
-              </div>
-            </div>
+         
           </div>
         </div>
       </div>
@@ -819,6 +811,7 @@
           <h6 class="mb-0">Navbar Fixed</h6>
           <div class="form-check form-switch ps-0 ms-auto my-auto">
             <input class="form-check-input mt-1 ms-auto" type="checkbox" id="navbarFixed" onclick="navbarFixed(this)">
+         
           </div>
         </div>
         <hr class="horizontal dark my-3">
@@ -850,7 +843,123 @@
   <script src="{{url_for('static',filename='js/perfect-scrollbar.min.js')}}"></script>
   <script src="{{url_for('static',filename='js/smooth-scrollbar.min.js')}}"></script>
   <script src="{{url_for('static',filename='js/chartjs.min.js')}}"></script>
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script>
+          var originalData = {{ original_data|tojson }};
+  var hourlyData = {{ hourly_data|tojson }};
+
+  function createHourlyChart(selectedDate) {
+    var selectedHourlyData = hourlyData[selectedDate];
+    var seriesData = selectedHourlyData.map(function(item) {
+      return {
+        name: item[0], // Hour
+        y: item[1] // Count
+      };
+    });
+
+    Highcharts.chart('hourly-chart', {
+      chart: {
+        type: 'column'
+      },
+      title: {
+        text: 'Hourly Counts for ' + selectedDate
+      },
+      xAxis: {
+        type: 'category',
+        categories: selectedHourlyData.map(function(item) {
+          return item[0]; // Hour
+        })
+      },
+      yAxis: {
+        title: {
+          text: 'Count'
+        }
+      },
+      series: [{
+        name: 'Count',
+        data: seriesData
+      }]
+    });
+  }
+
+  function updateChart() {
+    var fromDate = document.getElementById('from-date').value;
+    var toDate = document.getElementById('to-date').value;
+    var filteredData = originalData.filter(function(item) {
+      return item.name >= fromDate && item.name <= toDate;
+    });
+
+    Highcharts.chart('chart-container', {
+      chart: {
+        type: 'column'
+      },
+      title: {
+        text: 'Date-wise Counts'
+      },
+      xAxis: {
+        type: 'category'
+      },
+      yAxis: {
+        title: {
+          text: 'Count'
+        }
+      },
+      series: [{
+        name: 'Count',
+        data: filteredData,
+        events: {
+          click: function(event) {
+            var selectedDate = event.point.name;
+            createHourlyChart(selectedDate);
+          }
+        }
+      }]
+    });
+
+    document.getElementById('hourly-chart').innerHTML = '';
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    Highcharts.chart('chart-container', {
+      chart: {
+        type: 'column'
+      },
+      title: {
+        text: 'Date-wise Counts'
+      },
+      xAxis: {
+        type: 'category'
+      },
+      yAxis: {
+        title: {
+          text: 'Count'
+        }
+      },
+      series: [{
+        name: 'Count',
+        data: originalData,
+        events: {
+          click: function(event) {
+            var selectedDate = event.point.name;
+            createHourlyChart(selectedDate);
+          }
+        }
+      }]
+    });
+  });
+
+
+
+
+
+
+
+
+
+
+
+
     var ctx = document.getElementById("chart-bars").getContext("2d");
 
     new Chart(ctx, {
